@@ -1,0 +1,76 @@
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Shared Library Demo
+        run: |
+          echo "Shared Library Demo Step"
+      - name: Build with Maven
+        run: |
+          if [ -f pom.xml ]; then
+            mvn clean install
+          elif [ -f build.gradle ]; then
+            ./gradlew build
+          else
+            echo "No build file found (pom.xml or build.gradle)"
+          fi
+      - name: Test with Maven
+        run: |
+          if [ -f pom.xml ]; then
+            mvn test
+          elif [ -f build.gradle ]; then
+            ./gradlew test
+          else
+            echo "No test configuration found"
+          fi
+      - name: Package
+        run: |
+          if [ -f pom.xml ]; then
+            mvn package
+          elif [ -f build.gradle ]; then
+            ./gradlew build
+          else
+            echo "No packaging configuration found"
+          fi
+    outputs:
+      build-status: ${{ job.status }}
+  deployment:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: needs.build-and-test.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy Step
+        run: echo "Deployment step"
+  manual-step:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Manual Step
+        run: echo "Manual step"
+  another-shared-library-step:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Another Shared Library Step
+        run: echo "Another shared library step"
+  trigger-main-branch:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger Main Branch Step
+        run: echo "Trigger main branch step"
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
